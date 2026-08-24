@@ -13,29 +13,33 @@ jobs:
       - name: Install Build Dependencies
         run: |
           sudo apt update
-          sudo apt install -y build-essential bc bison flex libssl-dev libelf-dev zip curl git libncurses-dev lib32z1-dev lib32ncurses5-dev
+          sudo apt install -y build-essential bc bison flex libssl-dev libelf-dev zip curl git libncurses-dev
 
-      - name: Clone Azure Clang & GCC Toolchains
+      - name: Clone Azure Clang Toolchain
         run: |
           git clone https://gitlab.com/Panchajanya1999/azure-clang --depth=1 clang
-          git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9 -b android-12.0.0_r34 --depth=1 gcc64
-          git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9 -b android-12.0.0_r34 --depth=1 gcc32
 
       - name: Build Kernel
         run: |
-          export PATH="$(pwd)/clang/bin:$(pwd)/gcc64/bin:$(pwd)/gcc32/bin:$PATH"
+          export PATH="$(pwd)/clang/bin:$PATH"
           export ARCH=arm64
           export SUBARCH=arm64
 
-          # Defconfig সেটআপ
+          # স্ক্রিনশট অনুযায়ী শতভাগ সঠিক ফাইলের নাম
           make O=out vendor/fog-perf_defconfig
 
-          # আসল কমপাইল (PATH কনফ্লিক্ট ছাড়া)
+          # কমপাইল শুরু
           make -j$(nproc --all) O=out \
                CC=clang \
+               LD=ld.lld \
+               AR=llvm-ar \
+               NM=llvm-nm \
+               OBJCOPY=llvm-objcopy \
+               OBJDUMP=llvm-objdump \
+               STRIP=llvm-strip \
                CLANG_TRIPLE=aarch64-linux-gnu- \
-               CROSS_COMPILE=aarch64-linux-android- \
-               CROSS_COMPILE_ARM32=arm-linux-androideabi-
+               CROSS_COMPILE=aarch64-linux-gnu- \
+               CROSS_COMPILE_ARM32=arm-linux-gnueabi-
 
       - name: Upload Compiled Kernel Artifact
         uses: actions/upload-artifact@v4
