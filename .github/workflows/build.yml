@@ -21,22 +21,22 @@ jobs:
 
       - name: Build Kernel
         run: |
-          export PATH="$(pwd)/clang/bin:$PATH"
           export ARCH=arm64
           export SUBARCH=arm64
+          CLANG_DIR="$(pwd)/clang"
 
-          # স্ক্রিনশট অনুযায়ী শতভাগ সঠিক ফাইলের নাম
+          # Defconfig ফাইল লোড (Host GCC ব্যবহার করে)
           make O=out vendor/fog-perf_defconfig
 
-          # কমপাইল শুরু
+          # কমপাইল শুরু (Clang Path সরাসরি পাস করা হয়েছে)
           make -j$(nproc --all) O=out \
-               CC=clang \
-               LD=ld.lld \
-               AR=llvm-ar \
-               NM=llvm-nm \
-               OBJCOPY=llvm-objcopy \
-               OBJDUMP=llvm-objdump \
-               STRIP=llvm-strip \
+               CC=${CLANG_DIR}/bin/clang \
+               LD=${CLANG_DIR}/bin/ld.lld \
+               AR=${CLANG_DIR}/bin/llvm-ar \
+               NM=${CLANG_DIR}/bin/llvm-nm \
+               OBJCOPY=${CLANG_DIR}/bin/llvm-objcopy \
+               OBJDUMP=${CLANG_DIR}/bin/llvm-objdump \
+               STRIP=${CLANG_DIR}/bin/llvm-strip \
                CLANG_TRIPLE=aarch64-linux-gnu- \
                CROSS_COMPILE=aarch64-linux-gnu- \
                CROSS_COMPILE_ARM32=arm-linux-gnueabi-
