@@ -13,35 +13,29 @@ jobs:
       - name: Install Build Dependencies
         run: |
           sudo apt update
-          sudo apt install -y build-essential bc bison flex libssl-dev libelf-dev zip curl git libncurses-dev
+          sudo apt install -y build-essential bc bison flex libssl-dev libelf-dev zip curl git libncurses-dev lib32z1-dev lib32ncurses5-dev
 
-      - name: Clone Azure Clang Toolchain
+      - name: Clone Azure Clang & GCC Toolchains
         run: |
           git clone https://gitlab.com/Panchajanya1999/azure-clang --depth=1 clang
+          git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9 -b android-12.0.0_r34 --depth=1 gcc64
+          git clone https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9 -b android-12.0.0_r34 --depth=1 gcc32
 
       - name: Build Kernel
         run: |
-          export PATH="$(pwd)/clang/bin:$PATH"
+          export PATH="$(pwd)/clang/bin:$(pwd)/gcc64/bin:$(pwd)/gcc32/bin:$PATH"
           export ARCH=arm64
           export SUBARCH=arm64
 
-          # Defconfig ফাইল লোড
-          make O=out vendor/Fog-perf_defconfig
+          # Defconfig সেটআপ
+          make O=out vendor/fog-perf_defconfig
 
-          # হোস্ট ও টার্গেট কম্পাইলার সঠিকভাবে সেট করে বিল্ড
+          # আসল কমপাইল (PATH কনফ্লিক্ট ছাড়া)
           make -j$(nproc --all) O=out \
                CC=clang \
-               HOSTCC=clang \
-               HOSTCXX=clang++ \
-               LD=ld.lld \
-               AR=llvm-ar \
-               NM=llvm-nm \
-               OBJCOPY=llvm-objcopy \
-               OBJDUMP=llvm-objdump \
-               STRIP=llvm-strip \
                CLANG_TRIPLE=aarch64-linux-gnu- \
-               CROSS_COMPILE=aarch64-linux-gnu- \
-               CROSS_COMPILE_ARM32=arm-linux-gnueabi-
+               CROSS_COMPILE=aarch64-linux-android- \
+               CROSS_COMPILE_ARM32=arm-linux-androideabi-
 
       - name: Upload Compiled Kernel Artifact
         uses: actions/upload-artifact@v4
