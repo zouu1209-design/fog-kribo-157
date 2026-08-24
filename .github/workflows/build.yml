@@ -25,12 +25,14 @@ jobs:
           export ARCH=arm64
           export SUBARCH=arm64
 
-          # স্ক্রিনশট অনুযায়ী শতভাগ সঠিক ফাইলের নাম
-          make O=out vendor/fog-perf_defconfig
+          # Defconfig ফাইল লোড
+          make O=out vendor/Fog-perf_defconfig
 
-          # কমপাইল শুরু
+          # হোস্ট ও টার্গেট কম্পাইলার সঠিকভাবে সেট করে বিল্ড
           make -j$(nproc --all) O=out \
                CC=clang \
+               HOSTCC=clang \
+               HOSTCXX=clang++ \
                LD=ld.lld \
                AR=llvm-ar \
                NM=llvm-nm \
